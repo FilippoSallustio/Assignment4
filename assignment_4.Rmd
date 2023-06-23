@@ -60,6 +60,7 @@ new_data|>
 
 **Designated place**: type one or two sentences describing this table of a fellow student below. For example, comment on the mean and median growth of both groups. Then stage, commit and push it to their github repository. 
 
+[The table above depicts the overall growth of both groups "Revolitions" and "No Revolutions" from the dataset "GrowthSW". The table allows us to visualize the difference in growth between "No Revolution" "Revolution" as it provides observations such as mean, median, sd, min, and max of the variables "Growth" and "rgdp". It is clear that for "No Revolution", the varibale growth has a higher mean, median and min values and for the variable rgdp60, everything is greater. Where as for "Revolution" a greater sd, and max value for the variable growth are present. This indicates that "Revolutions" has a greater maximum growth and more variation between the its points, indicated by the greater sd value. Also, the greater median value for the "No revolutions" indicates that there is a greater average value of growth in the "No revolution". Furthemore, "No revolutions" is shown to have has a greater overall gdp as it has he greater mean value.]
 
 ### Part 3: Make a table summarizing reressions using modelsummary and kable
 
