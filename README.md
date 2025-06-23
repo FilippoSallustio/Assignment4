@@ -19,7 +19,7 @@ Execute the script to clean the data, train the model and produce a one-step ahe
 python3 ftse_mib_ann.py
 ```
 
-The script saves two plots:
+The script displays and also saves two plots:
 
 - `cleaned_data_plot.png` – the closing prices after preprocessing
 - `prediction_plot.png` – comparison of actual vs predicted prices
@@ -34,7 +34,7 @@ For a simple statistical baseline you can also run:
 python3 ftse_mib_arima.py
 ```
 
-This script produces several diagnostic plots including the cleaned closing
+This script displays and saves several diagnostic plots including the cleaned closing
 prices (`arima_cleaned_prices.png`) as well as ACF/PACF graphs
 (`arima_acf_pacf.png`). It then fits an ARIMA model chosen via `auto_arima` and
 saves the forecast comparison in `arima_prediction_plot.png`.

@@ -66,6 +66,7 @@ plt.xlabel("Date")
 plt.ylabel("Price")
 plt.tight_layout()
 plt.savefig("arima_cleaned_prices.png")
+plt.show()
 plt.close()
 
 # 4. Stationarity check
@@ -80,6 +81,7 @@ plot_pacf(df["Price"].diff().dropna(), ax=axes[1], lags=40, method="ywm")
 axes[1].set_title("PACF")
 plt.tight_layout()
 plt.savefig("arima_acf_pacf.png")
+plt.show()
 plt.close()
 
 # 6. Train/test split
@@ -129,6 +131,7 @@ plt.ylabel("FTSE MIB Close")
 plt.legend()
 plt.tight_layout()
 plt.savefig("arima_prediction_plot.png")
+plt.show()
 plt.close()
 
 # 9. Forecast next day using entire dataset

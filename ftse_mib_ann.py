@@ -63,6 +63,7 @@ plt.xlabel('Date')
 plt.ylabel('Price')
 plt.tight_layout()
 plt.savefig('cleaned_data_plot.png')
+plt.show()
 
 # 3. Prepare features for ANN
 # We'll predict closing price using the previous 60 closing prices
@@ -127,6 +128,7 @@ plt.ylabel('FTSE MIB Close')
 plt.legend()
 plt.tight_layout()
 plt.savefig('prediction_plot.png')
+plt.show()
 
 # 7. Forecast the next day
 last_window = scaled_close[-window_size:]
