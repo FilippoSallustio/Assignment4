@@ -156,11 +156,13 @@ rmse = np.sqrt(mean_squared_error(rv_test, forecast))
 mae = mean_absolute_error(rv_test, forecast)
 mape = mean_absolute_percentage_error(rv_test, forecast)
 r2 = r2_score(rv_test, forecast)
+qlike = np.mean(np.log(np.maximum(forecast, 1e-8)) + rv_test.values / np.maximum(forecast, 1e-8))
 print(
     f"Test RMSE: {rmse:.4f}\n"
     f"Test MAE: {mae:.4f}\n"
     f"Test MAPE: {mape:.2%}\n"
-    f"Test R^2: {r2:.4f}"
+    f"Test R^2: {r2:.4f}\n"
+    f"Test QLIKE: {qlike:.4f}"
 )
 
 # Plot actual vs predicted conditional variance
@@ -190,4 +192,9 @@ final_model = arch_model(
 final_res = final_model.fit(disp="off")
 next_fc = final_res.forecast(horizon=1, x=exog.iloc[[-1]])
 next_var = next_fc.variance.iloc[-1, 0]
-print(f"Next day predicted variance (%^2): {next_var:.4f}")
+print(
+    f"Next day predicted variance (%^2): {next_var:.4f}\n"
+    f"Model AIC: {final_res.aic:.2f}\n"
+    f"Model BIC: {final_res.bic:.2f}\n"
+    f"Model Log-Likelihood: {final_res.loglikelihood:.2f}"
+)

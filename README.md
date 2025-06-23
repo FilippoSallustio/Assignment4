@@ -63,4 +63,7 @@ regressor. After checking stationarity and ARCH effects it searches a
 small grid of EGARCH orders and forecasts conditional variance rather
 than returns.  The 80/20 train/test split is evaluated using a
 range-based volatility proxy.  Forecasts are displayed and saved as
-`egarch_variance_plot.png`.
+`egarch_variance_plot.png`.  Summary statistics such as RMSE, MAE,
+MAPE, R² and QLIKE are printed for the test period, while the final
+model's AIC, BIC and log-likelihood are reported when forecasting the
+next day's variance.
