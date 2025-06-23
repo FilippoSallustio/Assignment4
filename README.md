@@ -8,7 +8,7 @@ The data is provided in `dataftsemib_manual.csv`.
 Install the required Python packages:
 
 ```bash
-pip install pandas matplotlib scikit-learn tensorflow==2.12.0 statsmodels
+pip install pandas matplotlib scikit-learn tensorflow==2.12.0 statsmodels pmdarima
 ```
 
 ## Running the ANN example
@@ -33,4 +33,9 @@ For a simple statistical baseline you can also run:
 ```bash
 python3 ftse_mib_arima.py
 ```
+
+This script produces several diagnostic plots including the cleaned closing
+prices (`arima_cleaned_prices.png`) as well as ACF/PACF graphs
+(`arima_acf_pacf.png`). It then fits an ARIMA model chosen via `auto_arima` and
+saves the forecast comparison in `arima_prediction_plot.png`.
 
