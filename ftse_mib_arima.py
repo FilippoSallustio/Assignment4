@@ -19,6 +19,8 @@ from sklearn.metrics import (
 from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.tsa.stattools import adfuller
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.stats.diagnostic import acorr_ljungbox
+from scipy import stats
 import itertools
 
 # 1. Load data
@@ -129,6 +131,18 @@ print(
     f"Test MAE: {mae:.2f}\n"
     f"Test MAPE: {mape:.2%}\n"
     f"Test R^2: {r2:.2f}"
+)
+
+# 8b. Residual analysis for bias detection
+residuals = test - forecast
+# t-test for zero mean residuals (no bias)
+t_stat, t_p = stats.ttest_1samp(residuals, 0.0)
+# Ljung-Box test for autocorrelation up to lag 10
+ljung = acorr_ljungbox(residuals, lags=[10], return_df=True)
+print(
+    f"Residual mean: {residuals.mean():.4f}\n"
+    f"t-test p-value: {t_p:.4f}\n"
+    f"Ljung-Box p-value (lag 10): {ljung['lb_pvalue'].iloc[0]:.4f}"
 )
 
 # Plot actual vs predicted
