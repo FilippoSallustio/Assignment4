@@ -2,10 +2,12 @@
 
 This script cleans the data and computes daily log returns.  It tests for
 stationarity and ARCH effects before selecting an EGARCH specification via
-a small grid search.  The model uses log volume as an exogenous regressor
-in the mean equation and forecasts conditional variance rather than the
-return itself.  Forecasted variance is evaluated against a range-based
-volatility proxy on an 80/20 split of the data.
+a small grid search.  The model uses log volume together with lagged
+realized volatility and past shocks as exogenous regressors in the mean
+equation and forecasts the log conditional variance rather than the raw
+variance.  Forecasted variance is evaluated against a range-based
+volatility proxy on an 80/20 split of the data.  Standardised residuals are
+printed to ensure the specification captures volatility clustering.
 """
 
 import pandas as pd
@@ -18,7 +20,7 @@ from sklearn.metrics import (
     r2_score,
 )
 from statsmodels.tsa.stattools import adfuller
-from statsmodels.stats.diagnostic import het_arch
+from statsmodels.stats.diagnostic import het_arch, acorr_ljungbox
 from arch import arch_model
 import itertools
 
@@ -70,11 +72,19 @@ df["Range"] = (np.log(df["High"]) - np.log(df["Low"])) * 100
 df.dropna(inplace=True)
 
 returns = df["Return"]
-exog = df[["LogVol"]]
 return_dates = df["Date"]
 
 # Realized variance proxy combining squared returns and range
 df["RealizedVar"] = 0.5 * df["Return"].pow(2) + 0.5 * df["Range"].pow(2)
+# Lagged realized variance and past shock magnitude for EGARCH-X
+df["RV_lag1"] = df["RealizedVar"].shift(1)
+df["AbsShockLag1"] = df["Return"].abs().shift(1)
+df["LogRV"] = np.log(df["RealizedVar"])
+
+# Drop rows introduced by lagging
+df.dropna(inplace=True)
+
+exog = df[["LogVol", "RV_lag1", "AbsShockLag1"]]
 
 # Plot returns
 plt.figure(figsize=(10, 4))
@@ -100,14 +110,15 @@ split = int(len(returns) * 0.8)
 train, test = returns[:split], returns[split:]
 exog_train, exog_test = exog[:split], exog[split:]
 rv_train, rv_test = df["RealizedVar"][:split], df["RealizedVar"][split:]
+log_rv_train, log_rv_test = df["LogRV"][:split], df["LogRV"][split:]
 
 # 7. Grid search for EGARCH(p,o,q) order using AIC
-p_range = [1, 2, 3]
-o_range = [1, 2]
-q_range = [1, 2, 3]
-best_order = (1, 1, 1)
+orders = [(1, 1, 1), (2, 1, 1), (1, 2, 2), (2, 2, 1)]
+dists = ["t", "ged"]
+best_order = orders[0]
+best_dist = dists[0]
 best_aic = float("inf")
-for order in itertools.product(p_range, o_range, q_range):
+for order, dist in itertools.product(orders, dists):
     try:
         am = arch_model(
             train,
@@ -118,20 +129,22 @@ for order in itertools.product(p_range, o_range, q_range):
             p=order[0],
             o=order[1],
             q=order[2],
-            dist="t",
+            dist=dist,
         )
         res = am.fit(disp="off")
         if res.aic < best_aic:
             best_aic = res.aic
             best_order = order
+            best_dist = dist
     except Exception:
         continue
-print("Selected order:", best_order)
+print("Selected order:", best_order, "with dist", best_dist)
 
 # 8. Rolling one-step forecast on test set
 history_y = train.copy()
 history_x = exog_train.copy()
 forecast_var = []
+forecast_logvar = []
 for i in range(len(test)):
     am = arch_model(
         history_y,
@@ -142,21 +155,23 @@ for i in range(len(test)):
         p=best_order[0],
         o=best_order[1],
         q=best_order[2],
-        dist="t",
+        dist=best_dist,
     )
     res = am.fit(disp="off")
     fc = res.forecast(horizon=1, x=exog_test.iloc[i:i+1])
-    forecast_var.append(fc.variance.iloc[-1, 0])
+    var = fc.variance.iloc[-1, 0]
+    forecast_var.append(var)
+    forecast_logvar.append(np.log(var))
     history_y = pd.concat([history_y, pd.Series([test.iloc[i]])], ignore_index=True)
     history_x = pd.concat([history_x, exog_test.iloc[i:i+1]], ignore_index=True)
 
-forecast = pd.Series(forecast_var, index=test.index)
+forecast = pd.Series(forecast_logvar, index=test.index)
 
-rmse = np.sqrt(mean_squared_error(rv_test, forecast))
-mae = mean_absolute_error(rv_test, forecast)
-mape = mean_absolute_percentage_error(rv_test, forecast)
-r2 = r2_score(rv_test, forecast)
-qlike = np.mean(np.log(np.maximum(forecast, 1e-8)) + rv_test.values / np.maximum(forecast, 1e-8))
+rmse = np.sqrt(mean_squared_error(log_rv_test, forecast))
+mae = mean_absolute_error(log_rv_test, forecast)
+mape = mean_absolute_percentage_error(log_rv_test, forecast)
+r2 = r2_score(log_rv_test, forecast)
+qlike = np.mean(np.log(np.maximum(forecast_var, 1e-8)) + rv_test.values / np.maximum(forecast_var, 1e-8))
 print(
     f"Test RMSE: {rmse:.4f}\n"
     f"Test MAE: {mae:.4f}\n"
@@ -167,10 +182,10 @@ print(
 
 # Plot actual vs predicted conditional variance
 plt.figure(figsize=(10, 5))
-plt.plot(return_dates.iloc[split:], rv_test.values, label="Actual")
+plt.plot(return_dates.iloc[split:], log_rv_test.values, label="Actual")
 plt.plot(return_dates.iloc[split:], forecast.values, label="Predicted")
 plt.xlabel("Date")
-plt.ylabel("Variance (%^2)")
+plt.ylabel("Log Variance")
 plt.legend()
 plt.tight_layout()
 plt.savefig("egarch_variance_plot.png")
@@ -187,14 +202,18 @@ final_model = arch_model(
     p=best_order[0],
     o=best_order[1],
     q=best_order[2],
-    dist="t",
+    dist=best_dist,
 )
 final_res = final_model.fit(disp="off")
 next_fc = final_res.forecast(horizon=1, x=exog.iloc[[-1]])
 next_var = next_fc.variance.iloc[-1, 0]
+std_resid = final_res.std_resid
+ljung = acorr_ljungbox(std_resid ** 2, lags=[10], return_df=True)
 print(
     f"Next day predicted variance (%^2): {next_var:.4f}\n"
     f"Model AIC: {final_res.aic:.2f}\n"
     f"Model BIC: {final_res.bic:.2f}\n"
-    f"Model Log-Likelihood: {final_res.loglikelihood:.2f}"
+    f"Model Log-Likelihood: {final_res.loglikelihood:.2f}\n"
+    f"Std resid mean: {std_resid.mean():.4f}, std: {std_resid.std():.4f}\n"
+    f"Ljung-Box p-value (lag 10): {ljung['lb_pvalue'].iloc[0]:.4f}"
 )

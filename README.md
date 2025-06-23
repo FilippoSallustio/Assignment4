@@ -58,12 +58,12 @@ script:
 python3 ftse_mib_egarch.py
 ```
 
-The script calculates log returns and uses log volume as an exogenous
-regressor. After checking stationarity and ARCH effects it searches a
-small grid of EGARCH orders and forecasts conditional variance rather
-than returns.  The 80/20 train/test split is evaluated using a
-range-based volatility proxy.  Forecasts are displayed and saved as
-`egarch_variance_plot.png`.  Summary statistics such as RMSE, MAE,
-MAPE, R² and QLIKE are printed for the test period, while the final
-model's AIC, BIC and log-likelihood are reported when forecasting the
-next day's variance.
+The script calculates log returns and incorporates log volume together
+with lagged realized variance and past shocks as exogenous regressors.
+After checking stationarity and ARCH effects it tries a few EGARCH
+orders using both Student's *t* and GED error distributions and
+forecasts the log conditional variance.  The 80/20 train/test split is
+evaluated against a range-based volatility proxy.  Forecasts are saved
+as `egarch_variance_plot.png` and statistics such as RMSE, MAE, MAPE,
+R² and QLIKE are reported along with the final model's AIC, BIC,
+log‑likelihood and a Ljung‑Box check of standardized residuals.
