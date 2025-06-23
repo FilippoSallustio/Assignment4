@@ -48,3 +48,17 @@ are saved to `arima_prediction_plot.png`. If the residuals of the initial model
 exhibit autocorrelation (Ljung-Box p < 0.05), the script automatically
 re-estimates an ARIMA(3,1,3) model for comparison.
 
+
+## EGARCH example
+
+To model the volatility of daily returns you can run the EGARCH
+script:
+
+```bash
+python3 ftse_mib_egarch.py
+```
+
+The script calculates log returns, plots them and checks for
+stationarity and ARCH effects. It searches a small set of EGARCH orders
+and performs a rolling one-step-ahead forecast on an 80/20 split. The
+results are displayed and saved as `egarch_prediction_plot.png`.
