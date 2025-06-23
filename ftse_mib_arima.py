@@ -90,9 +90,9 @@ split = int(len(prices) * 0.8)
 train, test = prices[:split], prices[split:]
 
 # 7. Search for a good (p,d,q) order using AIC
-p = range(0, 4)
+p = range(0, 6)
 d = [0, 1]
-q = range(0, 4)
+q = range(0, 6)
 best_aic = float("inf")
 best_order = (1, 1, 1)
 for order in itertools.product(p, d, q):
@@ -108,8 +108,8 @@ for order in itertools.product(p, d, q):
 print("Selected order:", best_order)
 model_fit = ARIMA(train, order=best_order).fit()
 
-# 8. Forecast on test set
-forecast = model_fit.forecast(steps=len(test))
+# 8. Forecast on test set using one-step-ahead predictions
+forecast = model_fit.predict(start=split, end=len(prices) - 1, typ="levels")
 
 rmse = np.sqrt(mean_squared_error(test, forecast))
 mae = mean_absolute_error(test, forecast)
