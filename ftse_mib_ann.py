@@ -1,7 +1,12 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import (
+    mean_squared_error,
+    mean_absolute_error,
+    mean_absolute_percentage_error,
+    r2_score,
+)
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
@@ -41,6 +46,15 @@ df.sort_values('Date', inplace=True)
 
 df.reset_index(drop=True, inplace=True)
 
+# Plot the cleaned closing price data to verify preprocessing
+plt.figure(figsize=(10, 4))
+plt.plot(df['Date'], df['Price'])
+plt.title('FTSE MIB Closing Price')
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.tight_layout()
+plt.savefig('cleaned_data_plot.png')
+
 # 3. Prepare features for ANN
 # We'll predict closing price using the previous 60 closing prices
 close_values = df[['Price']].values
@@ -61,7 +75,7 @@ split = int(len(X) * 0.8)
 X_train, X_test = X[:split], X[split:]
 y_train, y_test = y[:split], y[split:]
 
-# 4. Build the ANN (LSTM)
+# 4. Build the LSTM network
 model = tf.keras.Sequential([
     tf.keras.layers.LSTM(50, return_sequences=True, input_shape=(X_train.shape[1], 1)),
     tf.keras.layers.LSTM(50),
@@ -85,7 +99,15 @@ pred_prices = scaler.inverse_transform(pred)
 true_prices = scaler.inverse_transform(y_test.reshape(-1, 1))
 
 rmse = np.sqrt(mean_squared_error(true_prices, pred_prices))
-print(f"Test RMSE: {rmse:.2f}")
+mae = mean_absolute_error(true_prices, pred_prices)
+mape = mean_absolute_percentage_error(true_prices, pred_prices)
+r2 = r2_score(true_prices, pred_prices)
+print(
+    f"Test RMSE: {rmse:.2f}\n"
+    f"Test MAE: {mae:.2f}\n"
+    f"Test MAPE: {mape:.2%}\n"
+    f"Test R^2: {r2:.2f}"
+)
 
 # Plot actual vs predicted
 plt.figure(figsize=(10,5))
