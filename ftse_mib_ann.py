@@ -1,3 +1,10 @@
+"""LSTM-based forecast of the FTSE MIB closing price.
+
+This script walks through loading the dataset, cleaning it, preparing
+sequences of closing prices and fitting a small neural network to
+forecast future values.
+"""
+
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
@@ -9,6 +16,8 @@ from sklearn.metrics import (
 )
 import tensorflow as tf
 import matplotlib.pyplot as plt
+
+tf.random.set_seed(0)
 
 # 1. Load data
 file_path = 'dataftsemib_manual.csv'
@@ -86,7 +95,7 @@ model.compile(optimizer='adam', loss='mse')
 # 5. Train the model
 history = model.fit(
     X_train, y_train,
-    epochs=1,
+    epochs=20,
     batch_size=32,
     validation_split=0.1,
     verbose=2
@@ -124,4 +133,7 @@ last_window = scaled_close[-window_size:]
 next_pred = model.predict(last_window.reshape(1, window_size, 1))
 next_price = scaler.inverse_transform(next_pred)[0,0]
 print(f"Next day predicted close: {next_price:.2f}")
+
+# Save the model for later use
+model.save("ftse_mib_ann_model.h5")
 
