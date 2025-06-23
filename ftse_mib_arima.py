@@ -144,6 +144,36 @@ print(
     f"t-test p-value: {t_p:.4f}\n"
     f"Ljung-Box p-value (lag 10): {ljung['lb_pvalue'].iloc[0]:.4f}"
 )
+final_order = best_order
+
+# If residuals show significant autocorrelation, try a slightly larger
+# model to address it.  This tests ARIMA(3,1,3) as suggested.
+if ljung['lb_pvalue'].iloc[0] < 0.05:
+    alt_order = (3, 1, 3)
+    print("Ljung-Box p < 0.05, refitting with order", alt_order)
+    model_fit = ARIMA(train, order=alt_order).fit()
+    forecast_vals = []
+    rolling_fit = model_fit
+    for obs in test:
+        pred = rolling_fit.forecast()
+        forecast_vals.append(pred.iloc[0])
+        rolling_fit = rolling_fit.append([obs], refit=False)
+    forecast = pd.Series(forecast_vals, index=test.index)
+    rmse = np.sqrt(mean_squared_error(test, forecast))
+    mae = mean_absolute_error(test, forecast)
+    mape = mean_absolute_percentage_error(test, forecast)
+    r2 = r2_score(test, forecast)
+    residuals = test - forecast
+    t_stat, t_p = stats.ttest_1samp(residuals, 0.0)
+    ljung = acorr_ljungbox(residuals, lags=[10], return_df=True)
+    print(
+        f"Refit RMSE: {rmse:.2f}\n"
+        f"Refit MAE: {mae:.2f}\n"
+        f"Refit MAPE: {mape:.2%}\n"
+        f"Refit R^2: {r2:.2f}\n"
+        f"Refit Ljung-Box p-value: {ljung['lb_pvalue'].iloc[0]:.4f}"
+    )
+    final_order = alt_order
 
 # Plot actual vs predicted
 plt.figure(figsize=(10, 5))
@@ -158,7 +188,7 @@ plt.show()
 plt.close()
 
 # 9. Forecast next day using entire dataset
-final_model = ARIMA(prices, order=best_order)
+final_model = ARIMA(prices, order=final_order)
 final_fit = final_model.fit()
 next_price = final_fit.forecast().iloc[0]
 print(f"Next day predicted close: {next_price:.2f}")

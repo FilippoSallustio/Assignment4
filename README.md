@@ -44,5 +44,7 @@ prices (`arima_cleaned_prices.png`) as well as ACF/PACF graphs
 (`arima_acf_pacf.png`). It then fits an ARIMA model selected via a small grid
 search and produces a rolling one-step forecast to compare against the test
 data. The series is split 80/20 between training and test portions. The results
-are saved to `arima_prediction_plot.png`.
+are saved to `arima_prediction_plot.png`. If the residuals of the initial model
+exhibit autocorrelation (Ljung-Box p < 0.05), the script automatically
+re-estimates an ARIMA(3,1,3) model for comparison.
 
