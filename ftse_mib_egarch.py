@@ -158,7 +158,10 @@ for i in range(len(test)):
         dist=best_dist,
     )
     res = am.fit(disp="off")
-    fc = res.forecast(horizon=1, x=exog_test.iloc[i:i+1])
+    fc = res.forecast(
+        horizon=1,
+        x={col: exog_test[col].iloc[[i]].values.reshape(1, 1) for col in exog.columns},
+    )
     var = fc.variance.iloc[-1, 0]
     forecast_var.append(var)
     forecast_logvar.append(np.log(var))
@@ -205,7 +208,10 @@ final_model = arch_model(
     dist=best_dist,
 )
 final_res = final_model.fit(disp="off")
-next_fc = final_res.forecast(horizon=1, x=exog.iloc[[-1]])
+next_fc = final_res.forecast(
+    horizon=1,
+    x={col: exog[col].iloc[[-1]].values.reshape(1, 1) for col in exog.columns},
+)
 next_var = next_fc.variance.iloc[-1, 0]
 std_resid = final_res.std_resid
 ljung = acorr_ljungbox(std_resid ** 2, lags=[10], return_df=True)
@@ -217,3 +223,4 @@ print(
     f"Std resid mean: {std_resid.mean():.4f}, std: {std_resid.std():.4f}\n"
     f"Ljung-Box p-value (lag 10): {ljung['lb_pvalue'].iloc[0]:.4f}"
 )
+
