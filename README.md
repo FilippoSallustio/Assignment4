@@ -58,7 +58,9 @@ script:
 python3 ftse_mib_egarch.py
 ```
 
-The script calculates log returns, plots them and checks for
-stationarity and ARCH effects. It searches a small set of EGARCH orders
-and performs a rolling one-step-ahead forecast on an 80/20 split. The
-results are displayed and saved as `egarch_prediction_plot.png`.
+The script calculates log returns and uses log volume as an exogenous
+regressor. After checking stationarity and ARCH effects it searches a
+small grid of EGARCH orders and forecasts conditional variance rather
+than returns.  The 80/20 train/test split is evaluated using a
+range-based volatility proxy.  Forecasts are displayed and saved as
+`egarch_variance_plot.png`.
