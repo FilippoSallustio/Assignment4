@@ -108,8 +108,17 @@ for order in itertools.product(p, d, q):
 print("Selected order:", best_order)
 model_fit = ARIMA(train, order=best_order).fit()
 
-# 8. Forecast on test set using one-step-ahead predictions
-forecast = model_fit.predict(start=split, end=len(prices) - 1, typ="levels")
+# 8. Forecast on test set using a rolling one-step approach
+# Update the fitted model with each new observation so forecasts respond
+# to the latest values without drifting toward a constant.
+forecast_vals = []
+rolling_fit = model_fit
+for obs in test:
+    pred = rolling_fit.forecast()
+    forecast_vals.append(pred.iloc[0])
+    # incorporate the actual observation without re-estimating parameters
+    rolling_fit = rolling_fit.append([obs], refit=False)
+forecast = pd.Series(forecast_vals, index=test.index)
 
 rmse = np.sqrt(mean_squared_error(test, forecast))
 mae = mean_absolute_error(test, forecast)

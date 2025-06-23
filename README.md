@@ -41,6 +41,8 @@ python3 ftse_mib_arima.py
 
 This script displays and saves several diagnostic plots including the cleaned closing
 prices (`arima_cleaned_prices.png`) as well as ACF/PACF graphs
-(`arima_acf_pacf.png`). It then fits an ARIMA model chosen via `auto_arima` and
-saves the forecast comparison in `arima_prediction_plot.png`.
+(`arima_acf_pacf.png`). It then fits an ARIMA model selected via a small grid
+search and produces a rolling one-step forecast to compare against the test
+data. The series is split 80/20 between training and test portions. The results
+are saved to `arima_prediction_plot.png`.
 
